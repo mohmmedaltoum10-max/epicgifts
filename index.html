@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EPIC GIFTS</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#07111f;color:#fff;font-family:Arial,sans-serif}
+header{position:sticky;top:0;z-index:5;background:#101f31;padding:17px 14px;border-bottom:1px solid #243951}
+h1{margin:0;font-size:23px;color:#74aaff}
+.sub{font-size:12px;color:#aabbd3;margin-top:6px}
+.balance{margin-top:13px;background:#172b43;border:1px solid #344b68;border-radius:25px;padding:10px;text-align:center;color:#ffce55;font-weight:bold}
+nav{display:flex;gap:8px;padding:12px;overflow:auto}
+nav button{border:1px solid #233b59;background:#12243a;color:#cbd8ec;padding:11px 16px;border-radius:20px;white-space:nowrap}
+nav button.active{background:#315ff5;color:white}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;padding:9px}
+.card{position:relative;background:linear-gradient(150deg,#15263a,#0b1829);border:1px solid #203c59;border-radius:18px;text-align:center;padding:12px 4px 10px;min-width:0;overflow:hidden}
+.art{height:90px;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 0 9px #427dff)} .art img{width:100%;height:88px;object-fit:contain}
+.name{font-size:12px;font-weight:bold;min-height:30px;display:flex;align-items:center;justify-content:center}
+.rarity{font-size:11px;color:#4bcaff;margin:4px 0}
+.price{display:block;background:#1b2b41;border:1px solid #354761;border-radius:20px;color:#ffd45c;padding:8px 2px;font-weight:bold;font-size:13px}
+.limited{position:absolute;top:8px;right:-23px;transform:rotate(-37deg);background:#20c95a;color:white;padding:5px 24px;font-size:10px;font-weight:bold}
+.buy{width:100%;margin-top:7px;padding:8px 2px;border:0;border-radius:12px;background:#275bf0;color:white;font-weight:bold;font-size:12px}
+button{cursor:pointer}
+#notice{text-align:center;color:#9db6d5;padding:12px;font-size:13px}
+.bottom{position:sticky;bottom:0;display:flex;justify-content:space-around;background:#101f31;border-top:1px solid #263d59;padding:12px 0}
+.bottom button{background:none;border:0;color:#aabbd3;font-size:12px}
+.bottom button span{display:block;font-size:21px;margin-bottom:4px}
+h2{font-size:18px;padding:0 12px}
+@media(max-width:360px){.grid{gap:6px;padding:6px}.art{font-size:44px;height:76px}.name{font-size:11px}.price{font-size:11px}}
+</style>
+</head>
+<body>
+<header>
+<h1>🎁 EPIC GIFTS</h1>
+<div class="sub">اجمع الهدايا النادرة واصنع مجموعتك!</div>
+<div class="balance">⭐ رصيدك: <span id="balance">2500</span> نجمة وهمية</div>
+</header>
+<nav id="filters">
+<button class="active" onclick="filter('الكل',this)">🎁 الكل</button>
+<button onclick="filter('شائع',this)">⭐ شائع</button>
+<button onclick="filter('نادر',this)">💎 نادر</button>
+<button onclick="filter('أسطوري',this)">👑 أسطوري</button>
+<button onclick="filter('مميز',this)">✨ مميز</button>
+</nav>
+<h2 id="heading">متجر الهدايا</h2>
+<div class="grid" id="grid"></div>
+<div id="notice">هذه هدايا افتراضية للعبة فقط، وليست هدايا تيليجرام الأصلية.</div>
+<div class="bottom">
+<button onclick="showShop()"><span>🎁</span>المتجر</button>
+<button onclick="showInventory()"><span>🎒</span>مخزني</button>
+<button onclick="showRocket()"><span>🚀</span>الصاروخ</button>
+<button onclick="alert('الإنجازات قريبًا!')"><span>🏆</span>الإنجازات</button>
+<button onclick="alert('EPIC GIFTS')"><span>👤</span>ملفي</button>
+</div>
+<script>
+const gifts=[
+['images/lollipop.jpg','مصاصة السعادة',500,'شائع',true],
+['images/pink_float.jpg','الطوق الوردي',480,'نادر',true],
+['images/telegram_bag.jpg','حقيبة تيليجرام',520,'شائع',true],
+['images/gold_bag.jpg','كيس الذهب',566,'نادر',true],
+['images/brown_gift.jpg','الهدية البنية',530,'أسطوري',true],
+['images/snowman_2025.jpg','رجل الثلج 2025',350,'نادر',true],
+['images/lucky_basket.jpg','سلة الحظ',474,'أسطوري',true],
+['images/candy_cane.jpg','عصا الكريسماس',449,'نادر',true],
+['images/clover.jpg','ورقة السعادة',566,'مميز',true],
+['images/socks.jpg','جوارب العيد',545,'نادر',true],
+['images/surprise_box.jpg','صندوق المفاجآت',425,'أسطوري',true],
+['images/cherries.jpg','الكرز',450,'نادر',true],
+['images/heart_queen.jpg','قلب الملكة',999,'أسطوري',true],
+['images/electric_star.jpg','النجمة الكهربائية',750,'مميز',true],
+['images/ramadan_moon.jpg','هلال رمضان',600,'مميز',true]
+];
+let balance=Number(localStorage.getItem('epic_balance') || 2500);
+let inventory=JSON.parse(localStorage.getItem('epic_inventory') || '[]');
+let current='الكل', mode='shop';
+function saveGame(){
+  localStorage.setItem('epic_balance', String(balance));
+  localStorage.setItem('epic_inventory', JSON.stringify(inventory));
+}
+function draw(){
+document.getElementById('balance').textContent=balance;
+document.getElementById('heading').textContent=mode==='shop'?'متجر الهدايا':'هدايا مخزني';
+let list=mode==='shop'?gifts.filter(g=>current==='الكل'||g[3]===current):inventory;
+document.getElementById('grid').innerHTML=list.length?list.map((g)=>`
+<div class="card">
+${g[4]?'<div class="limited">محدود</div>':''}
+<div class="art"><img src="${g[0]}" alt="${g[1]}"></div>
+<div class="name">${g[1]}</div>
+<div class="rarity">${g[3]==='أسطوري'?'👑':g[3]==='نادر'?'💎':g[3]==='مميز'?'✨':'⭐'} ${g[3]}</div>
+${mode==='shop'?`<div class="price">⭐ ${g[2]}</div><button class="buy" onclick="buy('${g[1]}')">شراء الهدية</button>`:`<div class="price">✅ تملكها</div><button class="buy" onclick="sell('${g[1]}')">بيع مقابل ⭐ ${Math.floor(g[2]*0.7)}</button>`}
+</div>`).join(''):'<p style="grid-column:1/-1;text-align:center;padding:30px">مخزنك فارغ، اشترِ هدية من المتجر 🎁</p>';
+}
+function filter(value,btn){current=value;mode='shop';document.querySelectorAll('#filters button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');draw()}
+function buy(name){let g=gifts.find(x=>x[1]===name);if(balance<g[2]){alert('رصيدك غير كافٍ!');return}balance-=g[2];inventory.push(g);saveGame();draw();alert('🎉 اشتريت '+name+' بنجاح!')}
+
+function sell(name){
+  const i=inventory.findIndex(g=>g[1]===name);
+  if(i<0)return;
+  const g=inventory[i];
+  if(!confirm('تبيع '+name+' مقابل '+Math.floor(g[2]*0.7)+' نجمة وهمية؟'))return;
+  balance+=Math.floor(g[2]*0.7);
+  inventory.splice(i,1);
+  saveGame();
+  draw();
+}
+function showRocket(){
+  mode='rocket';
+  document.getElementById('heading').textContent='🚀 لعبة الصاروخ';
+  const gifts = (inventory || []).map((g,i)=>
+    `<option value="${i}">${g[1]} — قيمة ${g[2]} ⭐</option>`
+  ).join('');
+  document.getElementById('grid').innerHTML=`
+  <div class="card" style="grid-column:1/-1;padding:24px">
+    <div id="rocketArt" style="font-size:72px">🚀</div>
+    <h2 id="multiplier">1.00x</h2>
+    <p>رصيدك: ⭐ <span id="rocketBalance">${balance}</span></p>
+    <label>طريقة المراهنة:</label>
+    <select id="betType" onchange="changeBetType()" style="width:100%;padding:12px;margin:8px 0">
+      <option value="stars">نجوم وهمية</option>
+      <option value="gift">هدية من المخزن</option>
+    </select>
+    <input id="rocketBet" type="number" min="25" step="1" value="25"
+      style="width:100%;box-sizing:border-box;padding:12px;margin:8px 0;border-radius:10px">
+    <select id="rocketGift" style="display:none;width:100%;padding:12px;margin:8px 0">${gifts || '<option value="">لا توجد هدايا بالمخزن</option>'}</select>
+    <button class="buy" id="startRocketButton" onclick="startRocket()">🚀 ابدأ الجولة</button>
+    <button class="buy" onclick="cashOut()">💰 اسحب الأرباح</button>
+    <p id="rocketMessage">الحد الأدنى للنجوم 25. الهدية تُستهلك عند بدء الجولة.</p>
+  </div>`;
+}
+function changeBetType(){
+  const gift=document.getElementById('betType').value==='gift';
+  document.getElementById('rocketBet').style.display=gift?'none':'block';
+  document.getElementById('rocketGift').style.display=gift?'block':'none';
+}
+function startRocket(){
+  if(rocketActive){alert('الجولة بدأت بالفعل');return}
+  const type=document.getElementById('betType').value;
+  let amount;
+  if(type==='gift'){
+    const idx=Number(document.getElementById('rocketGift').value);
+    if(!inventory || !inventory[idx]){alert('اختر هدية من المخزن أولًا');return}
+    amount=Number(inventory[idx][2]);
+    if(!Number.isFinite(amount)||amount<=0){alert('قيمة الهدية غير صالحة');return}
+    inventory.splice(idx,1);
+    rocketGiftBet=true;
+    saveGame();
+    if(typeof draw==='function')draw();
+    showRocket();
+  }else{
+    amount=Number(document.getElementById('rocketBet').value);
+    if(!Number.isSafeInteger(amount)||amount<25){alert('أقل مبلغ هو 25 نجمة وهمية');return}
+    if(amount>balance){alert('رصيدك لا يكفي');return}
+    balance-=amount;
+    rocketGiftBet=false;
+    saveGame();
+  }
+  rocketStake=amount;
+  rocketMult=1;
+  rocketCrash=1.2+Math.random()*3.8;
+  rocketActive=true;
+  const field=document.getElementById('rocketBet');
+  const giftField=document.getElementById('rocketGift');
+  const typeField=document.getElementById('betType');
+  if(field)field.disabled=true;
+  if(giftField)giftField.disabled=true;
+  if(typeField)typeField.disabled=true;
+  document.getElementById('rocketBalance').textContent=balance;
+  document.getElementById('rocketArt').textContent='🚀';
+  document.getElementById('rocketMessage').textContent='الصاروخ انطلق! اسحب قبل الانفجار.';
+  document.getElementById('startRocketButton').disabled=true;
+  clearInterval(rocketTimer);
+  rocketTimer=setInterval(()=>{
+    rocketMult+=0.05;
+    const m=document.getElementById('multiplier');
+    if(m)m.textContent=rocketMult.toFixed(2)+'x';
+    if(rocketMult>=rocketCrash){
+      clearInterval(rocketTimer);
+      rocketActive=false;
+      document.getElementById('rocketArt').textContent='💥';
+      document.getElementById('rocketMessage').textContent='انفجر الصاروخ! خسرت رهان الجولة.';
+      document.getElementById('startRocketButton').disabled=false;
+      if(field)field.disabled=false;
+      if(giftField)giftField.disabled=false;
+      if(typeField)typeField.disabled=false;
+    }
+  },180);
+}
+function cashOut(){
+  if(!rocketActive){alert('ما فيه جولة شغالة تقدر تسحب منها');return}
+  clearInterval(rocketTimer);
+  rocketActive=false;
+  const win=Math.floor(rocketStake*rocketMult);
+  balance+=win;
+  saveGame();
+  document.getElementById('balance').textContent=balance;
+  document.getElementById('rocketBalance').textContent=balance;
+  document.getElementById('rocketArt').textContent='🤑';
+  document.getElementById('rocketMessage').textContent='حصلت على '+win+' نجمة وهمية!';
+  document.getElementById('startRocketButton').disabled=false;
+  const field=document.getElementById('rocketBet');
+  const giftField=document.getElementById('rocketGift');
+  const typeField=document.getElementById('betType');
+  if(field)field.disabled=false;
+  if(giftField)giftField.disabled=false;
+  if(typeField)typeField.disabled=false;
+}
+function showShop(){mode='shop';current='الكل';draw()}
+function showInventory(){mode='inventory';draw()}
+draw();
+</script>
+</body>
+</html>
